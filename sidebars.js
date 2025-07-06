@@ -35,6 +35,7 @@ const sidebars = {
         'configuration/shop',
         'configuration/subscription',
         'configuration/im',
+        'configuration/database-settings',
       ],
     },
     {

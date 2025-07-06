@@ -235,6 +235,27 @@ OPTIMIZE TABLE node_online_log;
 
 请参考[基础配置文档](../configuration/basic#geoip2-配置)中的 GeoIP2 配置部分。
 
+## Cloudflare CDN 问题
+
+### 订阅链接配置 CDN 后不更新
+
+使用 Cloudflare CDN 后，订阅链接可能因为缓存导致无法及时更新。
+
+**解决方案：**
+
+在 Cloudflare 控制面板中设置缓存规则：
+
+1. 进入 **Caching** → **Cache Rules**
+2. 创建新规则
+3. 设置条件表达式：
+   ```
+   (http.request.uri.path contains "/sub")
+   ```
+4. 选择操作：**Bypass cache**
+5. 保存规则
+
+这样所有包含 `/sub` 的订阅链接请求都会绕过缓存，确保用户始终获取最新的订阅信息。
+
 ## 支付问题
 
 ### 支付回调失败
