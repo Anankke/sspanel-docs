@@ -235,6 +235,74 @@ OPTIMIZE TABLE node_online_log;
 
 请参考[基础配置文档](../configuration/basic#geoip2-配置)中的 GeoIP2 配置部分。
 
+## 登录会话问题
+
+### 登录后自动退出
+
+用户登录后几秒钟或几分钟内自动退出，通常是由于会话配置或安全验证导致。
+
+**原因分析：**
+
+1. **默认会话时长过短**
+   - 默认登录时长仅 1 小时（未勾选"记住我"）
+   - 勾选"记住我"可延长至 7 天
+
+2. **安全绑定机制触发**
+   - IP 绑定：IP 地址变化会导致退出
+   - 设备绑定：User-Agent 变化会导致退出
+
+**常见触发场景：**
+- 使用动态 IP（移动网络、家庭宽带）
+- 使用 VPN 或代理服务器
+- 浏览器开发者工具改变 User-Agent
+- NAT 网络环境下的 IP 变化
+
+**解决方案：**
+
+### 临时方案
+登录时勾选"记住我"选项，可将会话延长至 7 天。
+
+### 永久方案
+
+修改 `config/.config.php` 中的相关配置：
+
+```php
+// 1. 增加默认登录时长（推荐）
+$time = 86400; // 24 小时，原值为 3600（1小时）
+
+// 2. 调整安全绑定设置
+$_ENV['enable_login_bind_ip'] = false;     // 禁用 IP 绑定
+$_ENV['enable_login_bind_device'] = false; // 禁用设备绑定
+
+// 3. 延长"记住我"时长
+$_ENV['rememberMeDuration'] = 30; // 30 天，原值为 7 天
+```
+
+### 安全考量
+
+| 配置选项 | 安全性 | 用户体验 | 推荐场景 |
+|---------|--------|----------|---------|
+| IP 绑定开启 | 高 | 差 | 固定 IP 环境 |
+| IP 绑定关闭 | 中 | 好 | 动态 IP 环境 |
+| 设备绑定开启 | 中 | 中 | 一般使用 |
+| 设备绑定关闭 | 低 | 好 | 多设备切换 |
+
+### 推荐配置
+
+**大部分机场（用户 IP 经常变化）：**
+```php
+$_ENV['enable_login_bind_ip'] = false;     // 关闭 IP 绑定
+$_ENV['enable_login_bind_device'] = true;   // 保留设备绑定
+$_ENV['rememberMeDuration'] = 30;           // 30 天记住登录
+```
+
+**高安全性机场（重视账号安全）：**
+```php
+$_ENV['enable_login_bind_ip'] = true;       // 开启 IP 绑定
+$_ENV['enable_login_bind_device'] = true;   // 开启设备绑定
+$_ENV['rememberMeDuration'] = 7;            // 7 天记住登录
+```
+
 ## Cloudflare CDN 问题
 
 ### 订阅链接配置 CDN 后不更新
