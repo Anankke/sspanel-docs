@@ -54,6 +54,6 @@ SSPanel-UIM 是一个基于 PHP 的代理服务管理面板，具有以下特点
 我们提供两种安装方式：
 
 1. **[一键安装](./installation/quick-install)**：适合新手用户，自动化程度高
-2. **[手动安装](./installation/manual-install)**：适合有经验的用户，可定制性强
+2. **[手动安装](./installation/manual-install)**：适合有经验的用户，可定制性强（支持 Ubuntu、Debian、CentOS、Arch Linux 等）
 
 选择适合您的安装方式开始部署 SSPanel-UIM。

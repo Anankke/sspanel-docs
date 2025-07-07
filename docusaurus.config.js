@@ -76,6 +76,16 @@ const config = {
   ],
 
   themes: [],
+  
+  plugins: [
+    [
+      '@docusaurus/plugin-google-gtag',
+      {
+        trackingID: 'G-R4YPYCRDS3',
+        anonymizeIP: true,
+      },
+    ],
+  ],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */

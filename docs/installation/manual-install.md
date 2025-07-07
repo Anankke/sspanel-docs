@@ -94,6 +94,20 @@ sed -i 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
 ```
 
 </TabItem>
+<TabItem value="arch" label="Arch Linux">
+
+```bash
+# 更新系统
+pacman -Syu
+
+# 安装基础工具
+pacman -S base-devel git wget curl unzip
+
+# 设置时区
+timedatectl set-timezone Asia/Shanghai
+```
+
+</TabItem>
 </Tabs>
 
 ## 步骤 1：安装 Nginx
@@ -172,6 +186,21 @@ dnf install -y nginx
 # 启动服务
 systemctl start nginx && systemctl enable nginx
 ```
+
+</TabItem>
+<TabItem value="arch" label="Arch Linux">
+
+```bash
+# 安装 Nginx
+pacman -S nginx
+
+# 启动服务
+systemctl start nginx && systemctl enable nginx
+```
+
+:::note 注意
+Arch Linux 的 Nginx 默认用户是 `http`，不是 `www-data`。后续配置中需要注意这个差异。
+:::
 
 </TabItem>
 </Tabs>
@@ -279,6 +308,30 @@ systemctl start php-fpm && systemctl enable php-fpm
 ```
 
 </TabItem>
+<TabItem value="arch" label="Arch Linux">
+
+```bash
+# 安装 PHP 和必要扩展
+pacman -S php php-fpm php-intl php-gd php-sqlite php-redis php-sodium
+
+# 配置 PHP
+sed -i 's/^max_execution_time.*/max_execution_time = 300/' /etc/php/php.ini
+sed -i 's/^memory_limit.*/memory_limit = 256M/' /etc/php/php.ini
+sed -i 's/^post_max_size.*/post_max_size = 50M/' /etc/php/php.ini
+sed -i 's/^upload_max_filesize.*/upload_max_filesize = 50M/' /etc/php/php.ini
+sed -i 's/^;date.timezone.*/date.timezone = Asia\/Shanghai/' /etc/php/php.ini
+
+# 启动服务
+systemctl start php-fpm && systemctl enable php-fpm
+```
+
+:::note Arch Linux 特别说明
+- PHP-FPM 在 Arch 上默认使用 `http` 用户
+- Socket 路径为 `/run/php-fpm/php-fpm.sock`
+- 某些扩展可能需要从 AUR 安装
+:::
+
+</TabItem>
 </Tabs>
 
 ## 步骤 3：安装 MariaDB
@@ -354,6 +407,23 @@ EOF
 
 # 安装 MariaDB
 dnf install -y MariaDB-server MariaDB-client
+
+# 启动服务
+systemctl start mariadb && systemctl enable mariadb
+
+# 安全初始化
+mariadb-secure-installation
+```
+
+</TabItem>
+<TabItem value="arch" label="Arch Linux">
+
+```bash
+# 安装 MariaDB
+pacman -S mariadb
+
+# 初始化数据库
+mariadb-install-db --user=mysql --basedir=/usr --datadir=/var/lib/mysql
 
 # 启动服务
 systemctl start mariadb && systemctl enable mariadb
@@ -446,6 +516,22 @@ dnf install -y redis
 
 # 配置 Redis
 sed -i 's/^bind 127.0.0.1/bind 127.0.0.1/' /etc/redis/redis.conf
+echo "maxmemory 256mb" >> /etc/redis/redis.conf
+echo "maxmemory-policy allkeys-lru" >> /etc/redis/redis.conf
+
+# 启动服务
+systemctl start redis && systemctl enable redis
+```
+
+</TabItem>
+<TabItem value="arch" label="Arch Linux">
+
+```bash
+# 安装 Redis
+pacman -S redis
+
+# 配置 Redis
+sed -i 's/^# bind 127.0.0.1/bind 127.0.0.1/' /etc/redis/redis.conf
 echo "maxmemory 256mb" >> /etc/redis/redis.conf
 echo "maxmemory-policy allkeys-lru" >> /etc/redis/redis.conf
 
@@ -573,6 +659,29 @@ chmod -R 777 /var/www/sspanel/storage/framework
 chmod 664 /var/www/sspanel/config/.config.php
 chmod 664 /var/www/sspanel/config/appprofile.php
 
+```
+
+</TabItem>
+<TabItem value="arch" label="Arch Linux">
+
+```bash
+# 设置基础权限（注意 Arch 使用 http 用户）
+chown -R http:http /var/www/sspanel
+find /var/www/sspanel -type d -exec chmod 755 {} \;
+find /var/www/sspanel -type f -exec chmod 644 {} \;
+
+# 设置需要写权限的目录
+chmod -R 777 /var/www/sspanel/storage
+chmod 775 /var/www/sspanel/public/clients
+
+# 确保 storage 子目录存在且可写
+mkdir -p /var/www/sspanel/storage/framework/smarty/{cache,compile}
+mkdir -p /var/www/sspanel/storage/framework/twig/cache
+chmod -R 777 /var/www/sspanel/storage/framework
+
+# 配置文件权限（初次安装）
+chmod 664 /var/www/sspanel/config/.config.php
+chmod 664 /var/www/sspanel/config/appprofile.php
 ```
 
 </TabItem>
@@ -723,6 +832,60 @@ nginx -t
 # 重载 Nginx
 systemctl reload nginx
 ```
+
+</TabItem>
+<TabItem value="arch" label="Arch Linux">
+
+```bash
+# 创建配置目录（如果不存在）
+mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+
+# 创建站点配置
+cat > /etc/nginx/sites-available/sspanel <<'EOF'
+server {
+    listen 80;
+    listen [::]:80;
+    server_name your-domain.com;  # 修改为你的域名
+    
+    root /var/www/sspanel/public;
+    index index.php;
+    
+    location / {
+        try_files $uri /index.php$is_args$args;
+    }
+    
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php-fpm/php-fpm.sock;  # Arch 的 socket 路径
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+    
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+EOF
+
+# 创建软链接
+ln -sf /etc/nginx/sites-available/sspanel /etc/nginx/sites-enabled/
+
+# 确保主配置文件包含 sites-enabled
+grep -q "include /etc/nginx/sites-enabled" /etc/nginx/nginx.conf || \
+  sed -i '/^http {/a\    include /etc/nginx/sites-enabled/*;' /etc/nginx/nginx.conf
+
+# 测试配置
+nginx -t
+
+# 重载 Nginx
+systemctl reload nginx
+```
+
+:::note Arch Linux Nginx 配置说明
+- PHP-FPM socket 路径是 `/run/php-fpm/php-fpm.sock`
+- Arch 的 Nginx 可能没有预设的 sites-available/enabled 目录结构
+- 需要手动在 nginx.conf 中添加 include 指令
+:::
 
 </TabItem>
 </Tabs>
