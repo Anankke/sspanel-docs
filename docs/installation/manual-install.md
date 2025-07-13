@@ -27,8 +27,8 @@ import TabItem from '@theme/TabItem';
 - **架构**：x86_64
 - **软件版本**：
   - PHP 8.2+（本文档使用 8.4，推荐用于更好的性能）
-    - 必需扩展：bcmath、curl、fileinfo、json、mbstring、mysqli、openssl、pdo、posix、redis、sodium、xml、yaml、zip
-    - 建议扩展：gmp（提升 UUID 生成性能）、opcache（提升 PHP 性能）
+    - 必需扩展：bcmath、curl、fileinfo、gmp、json、mbstring、mysqli、openssl、pdo、posix、redis、sodium、xml、yaml、zip
+    - 性能优化扩展：opcache（强烈推荐，提升 PHP 性能）
   - MariaDB 10.11+（本文档使用 11.8 LTS，推荐的长期支持版本）
   - Redis 7.0+
   - Nginx 1.24+（必须支持 HTTPS）
@@ -587,10 +587,29 @@ cd /var/www
 
 # 克隆项目
 git clone https://github.com/Anankke/SSPanel-UIM.git sspanel
+
 cd sspanel
 
+# 配置 Git 安全目录（必需）
+# 因为后续会将目录权限改为 www-data，需要预先配置避免 Git 报错
+git config --global --add safe.directory /var/www/sspanel
+
+# 处理 PHP 扩展依赖（根据 PHP 版本选择）
+# 如果使用 PHP 8.4，建议删除 composer.lock 以获得更好的兼容性
+if php -v | grep -q "PHP 8.4"; then
+    echo "检测到 PHP 8.4，将删除 composer.lock 以优化依赖兼容性"
+    rm -f composer.lock
+fi
+
 # 安装依赖
+echo "开始安装 Composer 依赖..."
 composer install --no-dev --optimize-autoloader
+
+# 注意：如果出现 gmp 扩展缺失错误，有两种解决方案：
+# 方案1：安装 php-gmp 扩展（标准方案）
+#   Debian/Ubuntu: apt install php8.4-gmp
+#   CentOS/RHEL: dnf install php-gmp
+# 方案2：对于 PHP 8.4，上面已经删除了 composer.lock 会自动跳过不必要的扩展
 
 # 验证安装是否成功
 if [ ! -f vendor/autoload.php ]; then
@@ -599,28 +618,10 @@ if [ ! -f vendor/autoload.php ]; then
     exit 1
 fi
 
-# 注意：如果遇到 PHP 版本兼容性问题（例如从 PHP 8.2 升级到 8.4）
-# 可能会出现类似 "lcobucci/jwt 5.3.0 requires php ~8.1.0 || ~8.2.0 || ~8.3.0" 的错误
-# 解决方案：删除 composer.lock 文件让 Composer 重新解析兼容的依赖版本
-# rm composer.lock
-# composer install --no-dev --optimize-autoloader
-
 # 复制配置文件
 cp config/.config.example.php config/.config.php
 cp config/appprofile.example.php config/appprofile.php
 ```
-
-:::note Git 安全目录配置
-如果后续需要使用 `git pull` 更新代码，由于目录所有权会改为 www-data（或其他 Web 用户），Git 可能会报错：
-```
-fatal: detected dubious ownership in repository at '/var/www/sspanel'
-```
-
-解决方法是将该目录标记为安全目录：
-```bash
-git config --global --add safe.directory /var/www/sspanel
-```
-:::
 
 ### 设置目录权限
 

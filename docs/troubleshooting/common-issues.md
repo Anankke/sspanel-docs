@@ -45,57 +45,6 @@ rm composer.lock
 composer install --no-dev --optimize-autoloader
 ```
 
-### PHP 扩展缺失问题
-
-**错误信息：**
-```
-Your lock file does not contain a compatible set of packages. Please run composer update.
-
-  Problem 1
-    - sendgrid/sendgrid is locked to version 8.1.11 and an update of this package was not requested.
-    - sendgrid/sendgrid 8.1.11 requires ext-gmp * -> it is missing from your system. Install or enable PHP's gmp extension.
-```
-
-**问题原因：**
-
-SSPanel-UIM 依赖的某些包（如 sendgrid、starkbank/ecdsa）需要 PHP gmp 扩展。
-
-**解决方案：**
-
-**方案一：安装 PHP gmp 扩展（标准方案）**
-
-```bash
-# 1. 安装 gmp 扩展
-sudo apt update
-sudo apt install php8.4-gmp  # 根据你的 PHP 版本调整
-
-# 2. 重启 PHP-FPM
-sudo systemctl restart php8.4-fpm
-
-# 3. 重新安装依赖
-composer install --no-dev --optimize-autoloader
-```
-
-**方案二：删除 composer.lock 重新安装（推荐用于 PHP 8.4）**
-
-如果使用较新的 PHP 版本（如 8.4），建议删除 composer.lock 让 Composer 重新解析依赖：
-
-```bash
-# 1. 删除锁文件和依赖目录
-rm composer.lock
-rm -rf vendor/
-
-# 2. 清理缓存
-composer clear-cache
-
-# 3. 重新安装（会自动跳过不必要的扩展）
-composer install --no-dev --optimize-autoloader
-```
-
-**验证扩展是否安装：**
-```bash
-php -m | grep gmp
-```
 
 ### vendor/autoload.php 文件不存在
 
@@ -190,31 +139,32 @@ Failed to open stream: Permission denied
 
 ## 更新维护问题
 
-### Git 仓库权限问题
+### 更新代码后出现错误
 
-**错误信息：**
-```
-fatal: detected dubious ownership in repository at '/var/www/sspanel'
-```
+**问题描述：**
+执行 `git pull` 更新代码后，网站出现错误或无法访问。
 
-**问题原因：**
-
-当使用 `git pull` 更新代码时，如果 Git 仓库的所有者与当前用户不同（例如，root 用户克隆但目录已改为 www-data 所有），Git 2.35.2+ 版本会出于安全考虑拒绝操作。
+**常见原因：**
+1. 新版本可能需要更新数据库结构
+2. 新增了依赖包需要安装
+3. 配置文件格式发生变化
 
 **解决方案：**
 
-将目录标记为 Git 的安全目录：
-
 ```bash
-git config --global --add safe.directory /var/www/sspanel
-```
+# 1. 更新依赖
+composer install --no-dev --optimize-autoloader
 
-或者临时使用 root 用户更新：
+# 2. 执行数据库迁移
+php xcat Migration latest
 
-```bash
-sudo -u root git pull
-# 更新后重新设置权限
-chown -R www-data:www-data /var/www/sspanel
+# 3. 清理缓存
+rm -rf storage/framework/smarty/cache/*
+rm -rf storage/framework/smarty/compile/*
+rm -rf storage/framework/twig/cache/*
+
+# 4. 检查新版本的更新日志
+# 查看是否有配置文件变更或其他注意事项
 ```
 
 ## 配置问题
