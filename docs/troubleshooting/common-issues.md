@@ -45,6 +45,58 @@ rm composer.lock
 composer install --no-dev --optimize-autoloader
 ```
 
+### PHP 扩展缺失问题
+
+**错误信息：**
+```
+Your lock file does not contain a compatible set of packages. Please run composer update.
+
+  Problem 1
+    - sendgrid/sendgrid is locked to version 8.1.11 and an update of this package was not requested.
+    - sendgrid/sendgrid 8.1.11 requires ext-gmp * -> it is missing from your system. Install or enable PHP's gmp extension.
+```
+
+**问题原因：**
+
+SSPanel-UIM 依赖的某些包（如 sendgrid、starkbank/ecdsa）需要 PHP gmp 扩展。
+
+**解决方案：**
+
+**方案一：安装 PHP gmp 扩展（标准方案）**
+
+```bash
+# 1. 安装 gmp 扩展
+sudo apt update
+sudo apt install php8.4-gmp  # 根据你的 PHP 版本调整
+
+# 2. 重启 PHP-FPM
+sudo systemctl restart php8.4-fpm
+
+# 3. 重新安装依赖
+composer install --no-dev --optimize-autoloader
+```
+
+**方案二：删除 composer.lock 重新安装（推荐用于 PHP 8.4）**
+
+如果使用较新的 PHP 版本（如 8.4），建议删除 composer.lock 让 Composer 重新解析依赖：
+
+```bash
+# 1. 删除锁文件和依赖目录
+rm composer.lock
+rm -rf vendor/
+
+# 2. 清理缓存
+composer clear-cache
+
+# 3. 重新安装（会自动跳过不必要的扩展）
+composer install --no-dev --optimize-autoloader
+```
+
+**验证扩展是否安装：**
+```bash
+php -m | grep gmp
+```
+
 ### vendor/autoload.php 文件不存在
 
 **错误信息：**
