@@ -4,6 +4,8 @@
 [![Deploy to Cloudflare Pages](https://img.shields.io/badge/Deploy%20to-Cloudflare%20Pages-orange?style=flat-square&logo=cloudflare)](https://pages.cloudflare.com/)
 [![License](https://img.shields.io/github/license/Anankke/sspanel-docs?style=flat-square)](LICENSE)
 
+<a href="https://trendshift.io/repositories/1832" target="_blank"><img src="https://trendshift.io/api/badge/repositories/1832" alt="Anankke%2FSSPanel-Uim | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
 SSPanel-UIM 的官方文档站点，提供完整的安装、配置和使用指南。
 
 ## 🌐 访问地址

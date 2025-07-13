@@ -1,19 +1,19 @@
-facebook:
-  label: Facebook
-  permalink: /facebook
-  description: Facebook tag description
+公告:
+  label: 公告
+  permalink: /announcement
+  description: SSPanel 官方公告
 
-hello:
-  label: Hello
-  permalink: /hello
-  description: Hello tag description
+更新:
+  label: 更新
+  permalink: /updates
+  description: SSPanel 更新信息
 
-docusaurus:
-  label: Docusaurus
-  permalink: /docusaurus
-  description: Docusaurus tag description
+教程:
+  label: 教程
+  permalink: /tutorial
+  description: SSPanel 使用教程
 
-hola:
-  label: Hola
-  permalink: /hola
-  description: Hola tag description
+技术:
+  label: 技术
+  permalink: /technical
+  description: 技术相关文章
