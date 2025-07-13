@@ -45,6 +45,57 @@ rm composer.lock
 composer install --no-dev --optimize-autoloader
 ```
 
+### vendor/autoload.php 文件不存在
+
+**错误信息：**
+```
+PHP Warning: require(/var/www/sspanel/vendor/autoload.php): Failed to open stream: No such file or directory
+PHP Fatal error: Uncaught Error: Failed opening required '/var/www/sspanel/vendor/autoload.php'
+```
+
+**问题原因：**
+
+这个错误表示 Composer 依赖没有正确安装，`vendor` 目录不存在或为空。
+
+**解决方案：**
+
+1. 确保在项目根目录下：
+```bash
+cd /var/www/sspanel
+```
+
+2. 检查 Composer 是否安装：
+```bash
+composer --version
+```
+
+3. 重新安装依赖：
+```bash
+# 清理可能损坏的 vendor 目录
+rm -rf vendor
+
+# 清理 Composer 缓存
+composer clear-cache
+
+# 重新安装依赖
+composer install --no-dev --optimize-autoloader
+```
+
+4. 确认 vendor 目录已创建：
+```bash
+ls -la vendor/autoload.php
+```
+
+5. 如果仍有问题，检查权限：
+```bash
+# 确保当前用户有写权限
+chown -R $(whoami) /var/www/sspanel
+composer install --no-dev --optimize-autoloader
+
+# 安装完成后恢复 Web 用户权限
+chown -R www-data:www-data /var/www/sspanel
+```
+
 ### 数据库连接失败
 
 **错误信息：**
@@ -84,6 +135,35 @@ Failed to open stream: Permission denied
 **解决方案：**
 
 请参考[手动安装文档](../installation/manual-install#设置目录权限)中的权限设置部分，确保正确设置文件所有者和权限。
+
+## 更新维护问题
+
+### Git 仓库权限问题
+
+**错误信息：**
+```
+fatal: detected dubious ownership in repository at '/var/www/sspanel'
+```
+
+**问题原因：**
+
+当使用 `git pull` 更新代码时，如果 Git 仓库的所有者与当前用户不同（例如，root 用户克隆但目录已改为 www-data 所有），Git 2.35.2+ 版本会出于安全考虑拒绝操作。
+
+**解决方案：**
+
+将目录标记为 Git 的安全目录：
+
+```bash
+git config --global --add safe.directory /var/www/sspanel
+```
+
+或者临时使用 root 用户更新：
+
+```bash
+sudo -u root git pull
+# 更新后重新设置权限
+chown -R www-data:www-data /var/www/sspanel
+```
 
 ## 配置问题
 

@@ -27,6 +27,8 @@ import TabItem from '@theme/TabItem';
 - **架构**：x86_64
 - **软件版本**：
   - PHP 8.2+（本文档使用 8.4，推荐用于更好的性能）
+    - 必需扩展：bcmath、curl、fileinfo、json、mbstring、mysqli、openssl、pdo、posix、redis、sodium、xml、yaml、zip
+    - 建议扩展：gmp（提升 UUID 生成性能）、opcache（提升 PHP 性能）
   - MariaDB 10.11+（本文档使用 11.8 LTS，推荐的长期支持版本）
   - Redis 7.0+
   - Nginx 1.24+（必须支持 HTTPS）
@@ -226,8 +228,12 @@ gpg --dearmor < /tmp/php.gpg > /usr/share/keyrings/php-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/php-archive-keyring.gpg] \
   https://packages.sury.org/php/ bookworm main" > /etc/apt/sources.list.d/php.list
 
-# 安装 PHP 8.4
-apt update && apt install -y php8.4-{bcmath,bz2,cli,common,curl,fpm,gd,igbinary,intl,mbstring,mysql,opcache,readline,redis,soap,xml,yaml,zip}
+# 安装 PHP 8.4 及必需扩展
+apt update && apt install -y php8.4-{bcmath,bz2,cli,common,curl,fpm,gd,gmp,igbinary,intl,mbstring,mysql,opcache,readline,redis,soap,xml,yaml,zip}
+
+# 注意：posix 和 sodium 扩展是必需的
+# 大多数系统会通过 php8.4-common 自动安装，如果没有，请运行：
+# apt install -y php8.4-posix php8.4-sodium
 
 # 配置 PHP
 sed -i 's/^max_execution_time.*/max_execution_time = 300/' /etc/php/8.4/fpm/php.ini
@@ -253,8 +259,12 @@ systemctl restart php8.4-fpm && systemctl enable php8.4-fpm
 add-apt-repository ppa:ondrej/php -y
 apt update
 
-# 安装 PHP 8.4
-apt install -y php8.4-{bcmath,bz2,cli,common,curl,fpm,gd,intl,mbstring,mysql,opcache,readline,redis,soap,xml,yaml,zip}
+# 安装 PHP 8.4 及必需扩展
+apt install -y php8.4-{bcmath,bz2,cli,common,curl,fpm,gd,gmp,intl,mbstring,mysql,opcache,readline,redis,soap,xml,yaml,zip}
+
+# 注意：某些系统可能需要单独安装 posix 和 sodium 扩展
+# 如果上面的命令没有安装这些扩展，请运行：
+# apt install -y php8.4-posix php8.4-sodium
 
 # 配置 PHP
 sed -i 's/^max_execution_time.*/max_execution_time = 300/' /etc/php/8.4/fpm/php.ini
@@ -285,10 +295,16 @@ dnf install -y epel-release
 dnf install -y https://rpms.remirepo.net/enterprise/remi-release-9.rpm  # For EL9
 # dnf install -y https://rpms.remirepo.net/enterprise/remi-release-8.rpm  # For EL8
 
-# 安装 PHP 8.4
+# 安装 PHP 8.4 及必需扩展
 dnf module reset php -y
 dnf module install php:remi-8.4 -y
-dnf install -y php-{bcmath,cli,common,fpm,gd,intl,json,mbstring,mysqlnd,opcache,pdo,pecl-redis5,pecl-yaml,soap,xml,zip}
+dnf install -y php-{bcmath,cli,common,fpm,gd,gmp,intl,json,mbstring,mysqlnd,opcache,pdo,pecl-redis5,pecl-yaml,process,soap,sodium,xml,zip}
+
+# 注意：process 包提供 posix 扩展，sodium 包提供加密功能
+# 如果批量安装失败，可以单独安装必需的扩展：
+# dnf install -y php-process php-sodium php-gmp
+# 或者使用 yum（旧版本系统）：
+# yum install -y php-posix php-sodium php-gmp
 
 # 配置 PHP
 sed -i 's/^max_execution_time.*/max_execution_time = 300/' /etc/php.ini
@@ -312,7 +328,9 @@ systemctl start php-fpm && systemctl enable php-fpm
 
 ```bash
 # 安装 PHP 和必要扩展
-pacman -S php php-fpm php-intl php-gd php-sqlite php-redis php-sodium
+pacman -S php php-fpm php-intl php-gd php-sqlite php-redis php-sodium php-gmp
+
+# 注意：Arch Linux 的 PHP 包默认包含了 posix 扩展
 
 # 配置 PHP
 sed -i 's/^max_execution_time.*/max_execution_time = 300/' /etc/php/php.ini
@@ -574,6 +592,13 @@ cd sspanel
 # 安装依赖
 composer install --no-dev --optimize-autoloader
 
+# 验证安装是否成功
+if [ ! -f vendor/autoload.php ]; then
+    echo "错误：Composer 依赖安装失败"
+    echo "请检查错误信息并重新运行 composer install"
+    exit 1
+fi
+
 # 注意：如果遇到 PHP 版本兼容性问题（例如从 PHP 8.2 升级到 8.4）
 # 可能会出现类似 "lcobucci/jwt 5.3.0 requires php ~8.1.0 || ~8.2.0 || ~8.3.0" 的错误
 # 解决方案：删除 composer.lock 文件让 Composer 重新解析兼容的依赖版本
@@ -584,6 +609,18 @@ composer install --no-dev --optimize-autoloader
 cp config/.config.example.php config/.config.php
 cp config/appprofile.example.php config/appprofile.php
 ```
+
+:::note Git 安全目录配置
+如果后续需要使用 `git pull` 更新代码，由于目录所有权会改为 www-data（或其他 Web 用户），Git 可能会报错：
+```
+fatal: detected dubious ownership in repository at '/var/www/sspanel'
+```
+
+解决方法是将该目录标记为安全目录：
+```bash
+git config --global --add safe.directory /var/www/sspanel
+```
+:::
 
 ### 设置目录权限
 
@@ -892,10 +929,25 @@ systemctl reload nginx
 
 ## 步骤 9：初始化数据库
 
+:::warning 重要提示
+在执行数据库初始化前，请确保已经完成以下步骤：
+1. 已执行 `composer install` 安装依赖
+2. 已配置好 `.config.php` 中的数据库连接信息
+3. 确保 `vendor/autoload.php` 文件存在
+
+如果遇到 "Failed to open stream: No such file or directory" 错误，说明 Composer 依赖未安装。
+:::
+
 所有系统通用：
 
 ```bash
 cd /var/www/sspanel
+
+# 首先确认 vendor 目录存在
+if [ ! -f vendor/autoload.php ]; then
+    echo "错误：vendor/autoload.php 不存在，请先运行 composer install"
+    composer install --no-dev --optimize-autoloader
+fi
 
 # 执行数据库迁移（初始化全新数据库）
 php xcat Migration new
