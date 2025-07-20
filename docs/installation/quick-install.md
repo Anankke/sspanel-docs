@@ -33,6 +33,7 @@ SSPanel-UIM 提供基于 Docker 的容器化部署方案，让您能够在几分
 
 1. **一键脚本下载**：
 ```bash
+apt update && apt install -y curl unzip openssl 
 bash <(curl -sL https://raw.githubusercontent.com/Anankke/SSPanel-UIM/refs/heads/master/infra/quick-install.sh)
 ```
 
