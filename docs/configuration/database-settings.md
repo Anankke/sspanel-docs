@@ -136,7 +136,7 @@ SSPanel 使用 `class` 字段对配置进行分类管理，常见的分类包括
 
 ## 示例：添加新配置项
 
-数据库中的配置项以 `config/settings.json` 为准。`php xcat Tool importSetting` 会添加文件中新增的配置项、按文件更新已有配置项的 `class`，并删除文件中没有的配置项。直接用 SQL 插入的配置项会在下次运行该命令时被删除，每次升级都会运行这个命令。
+数据库中的配置项以 `config/settings.json` 为准。`php xcat Tool importSetting` 会添加文件中新增的配置项、按文件更新已有配置项的 `class` 和 `is_public`，并删除文件中没有的配置项。直接用 SQL 插入的配置项会在下次运行该命令时被删除，每次升级都会运行这个命令。
 
 新增配置项时，在 `config/settings.json` 中加入一项：
 

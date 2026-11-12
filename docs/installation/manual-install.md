@@ -26,7 +26,7 @@ import TabItem from '@theme/TabItem';
   - RHEL 8/9
 - **架构**：x86_64
 - **软件版本**：
-  - PHP 8.2+（本文档使用 8.4，推荐用于更好的性能）
+  - PHP 8.4+，已在 8.4 和 8.5 上测试，本文档使用 8.4
     - 必需扩展：bcmath、curl、fileinfo、gmp、json、mbstring、openssl、pdo、pdo_mysql、posix、redis、sodium、xml、yaml、zip
     - 性能优化扩展：opcache（强烈推荐，提升 PHP 性能）
   - MariaDB 10.11+（本文档使用 11.8 LTS，推荐的长期支持版本）
@@ -210,12 +210,9 @@ Arch Linux 的 Nginx 默认用户是 `http`，不是 `www-data`。后续配置�
 ## 步骤 2：安装 PHP
 
 :::tip PHP 版本说明
-SSPanel-UIM 要求 PHP 8.2 以上版本。本文档使用 PHP 8.4，它提供了：
-- 更好的性能（特别是 JIT 编译器优化）
-- 最新的安全特性
-- 更长的官方支持周期
+SSPanel-UIM 从 26.2.0 起要求 PHP 8.4 或更高版本，8.4 和 8.5 都测试过。本文档用的是 PHP 8.4，想装 8.5 就把下面命令里的 `8.4` 换成 `8.5`。
 
-如需使用其他版本，请将下面命令中的 `8.4` 替换为所需版本号（如 `8.2` 或 `8.3`）。
+26.1.0 是最后一个能跑在 PHP 8.2 和 8.3 上的版本。旧站点要先升级到 26.1.0，再换 PHP、升级到 26.2.0，步骤见[常见问题](../troubleshooting/common-issues#升级到-2620)。
 :::
 
 <Tabs groupId="os">

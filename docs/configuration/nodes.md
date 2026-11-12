@@ -193,27 +193,25 @@ openssl rand -base64 32  # 用于 aes-256-gcm
 }
 ```
 
+:::warning TLS 节点
+订阅里的 VMess 节点开不开 TLS 只看 `security`，Clash、sing-box、V2Ray 和 V2Ray JSON 订阅都一样。后端跑着 TLS 的节点要写 `"security": "tls"`，没写的话所有订阅都按不带 TLS 输出这个节点，客户端连不上。
+:::
+
 #### WebSocket 配置
 
-当 `network` 为 `ws` 时，Clash 订阅读取 `ws-opts` 或 `ws_opts`，sing-box、V2Ray JSON 和 V2Ray 订阅读取顶层的 `path`，两处都要填写：
+当 `network` 为 `ws` 时，各订阅格式都读取顶层的 `path`，Clash、sing-box 和 V2Ray 订阅还把 `host` 作为 WebSocket 的 Host 头。Clash 订阅另外读取 `ws-opts` 或 `ws_opts`，里面写了的键优先，没写的 `path` 和 Host 头用顶层的值补上：
 
 ```json
 {
   "network": "ws",
   "security": "tls",  // 可选，启用 TLS
-  "host": "cdn.example.com",  // SNI（当使用 TLS 时）
-  "path": "/ray",
-  "ws-opts": {
-    "path": "/ray",
-    "headers": {
-      "Host": "cdn.example.com"
-    }
-  }
+  "host": "cdn.example.com",  // SNI 和 Host 头
+  "path": "/ray"
 }
 ```
 
 :::info 注意
-`ws-opts`、`h2-opts`、`grpc-opts` 只会原样写入 Clash 订阅，请按 Clash 的格式填写。
+`ws-opts`、`h2-opts`、`grpc-opts` 只会写入 Clash 订阅，请按 Clash 的格式填写。
 :::
 
 #### HTTP/2 配置
@@ -234,17 +232,14 @@ openssl rand -base64 32  # 用于 aes-256-gcm
 
 #### gRPC 配置
 
-当 `network` 为 `grpc` 时，Clash 订阅读取 `grpc-opts` 或 `grpc_opts`，其他订阅格式读取顶层的 `servicename`：
+当 `network` 为 `grpc` 时，各订阅格式都读取顶层的 `servicename` 作为 gRPC 服务名。Clash 订阅另外读取 `grpc-opts` 或 `grpc_opts`，里面写了 `grpc-service-name` 时用它：
 
 ```json
 {
   "network": "grpc",
   "security": "tls",  // 通常需要 TLS
   "host": "cdn.example.com",
-  "servicename": "grpc",
-  "grpc-opts": {
-    "grpc-service-name": "grpc"  // gRPC 服务名
-  }
+  "servicename": "grpc"  // gRPC 服务名
 }
 ```
 
@@ -464,7 +459,7 @@ $_ENV['checkNodeIp'] = true;
 
 :::tip 配置格式
 - SSPanel-UIM 支持下划线和连字符两种格式：`ws_opts` 和 `ws-opts`
-- `ws-opts`、`h2-opts`、`http-opts`、`grpc-opts` 原样写入 Clash 订阅；其他订阅格式只读取 `path`、`host`、`servicename` 等顶层字段
+- `ws-opts`、`h2-opts`、`http-opts`、`grpc-opts` 只写入 Clash 订阅；VMess 节点的 `ws-opts`、`grpc-opts` 缺的键由顶层的 `path`、`host`、`servicename` 补上，其他订阅格式只读取这些顶层字段
 - 旧版格式（如 `header.type`）仍然兼容
 :::
 
@@ -498,12 +493,7 @@ SSPanel-UIM 兼容一些旧版配置格式：
   "network": "ws",
   "security": "tls",
   "host": "cdn.example.com",
-  "ws-opts": {
-    "path": "/vmess",
-    "headers": {
-      "Host": "cdn.example.com"
-    }
-  },
+  "path": "/vmess",
   "allow_insecure": false,
   "udp": true
 }

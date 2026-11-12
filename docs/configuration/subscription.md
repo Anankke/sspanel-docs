@@ -56,6 +56,7 @@ JSON 格式的账户信息：用户名、邮箱、等级与到期时间、流量
 **特性：**
 - JSON 格式输出
 - 包含 Shadowsocks、Shadowsocks 2022、TUIC、VMess、VLESS、Trojan、Hysteria2 节点，`network` 为 `xhttp` 的 VLESS 节点除外
+- VMess 节点只在自定义配置写了 `"security": "tls"` 时开启 TLS，见[节点配置](./nodes#vmess-节点配置)
 
 :::info sing-box 版本
 面板自带的 sing-box 配置模板，即 `config/appprofile.example.php` 中的 `SingBox_Config`，需要 sing-box 1.14.0 及以上版本。站点实际使用的是自己的 `config/appprofile.php`，升级面板不会更新这个文件，需要手动把示例文件中的新模板合并进去。
@@ -88,7 +89,7 @@ V2Ray 的 JSON 配置格式。
 **请求路径：** `/sub/{token}/ss`
 
 **特性：**
-- Base64 编码的节点信息
+- 每行一个 `ss://` 链接，`ss://` 后面是 `加密方式:密码@地址:端口` 的 Base64 编码，`#` 后面是节点名
 - 需要在订阅设置中启用 `enable_ss_sub`
 
 ### 7. SIP002 格式
@@ -98,7 +99,7 @@ Shadowsocks SIP002 标准格式。
 **请求路径：** `/sub/{token}/sip002`
 
 **特性：**
-- 符合 SIP002 标准的 ss:// 链接
+- 每行一个符合 SIP002 标准的 `ss://` 链接，节点配置了 `plugin` 时带上插件参数
 - 需要在订阅设置中启用 `enable_ss_sub`
 
 ### 8. SIP008 格式

@@ -21,7 +21,7 @@ Your requirements could not be resolved to an installable set of packages.
 
 ```bash
 # 1. 确保 PHP 版本正确
-php -v  # 需要 PHP 8.2+
+php -v  # 需要 PHP 8.4+
 
 # 2. 清理 Composer 缓存
 composer clear-cache
@@ -183,6 +183,21 @@ rm -rf storage/framework/twig/cache/*
 ```
 
 升级不会更新存放订阅模板的 `config/appprofile.php`。如果 `config/appprofile.example.php` 有变化，需要手动把改动合并到 `config/appprofile.php`。
+
+### 升级到 26.2.0
+
+26.2.0 要求 PHP 8.4 或更高版本，26.1.0 是最后一个能跑在 PHP 8.2 和 8.3 上的版本。升级前：
+
+1. 先升级到 26.1.0。它的 `update.sh` 在改动任何东西之前会先检查 PHP 和扩展
+2. 把 PHP CLI 和 PHP-FPM 都换成 8.4 或更高版本，装上和原来一样的扩展
+3. 跑着 TLS 的 VMess 节点，在自定义配置里写上 `"security": "tls"`，sing-box 订阅现在也按这个字段决定开不开 TLS，见[节点配置](../configuration/nodes#vmess-节点配置)
+4. 备份数据库
+
+然后从 26.1.0 升级：
+
+```bash
+bash update.sh release 26.2.0 2025073100
+```
 
 ## 配置问题
 

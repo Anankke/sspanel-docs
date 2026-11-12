@@ -39,7 +39,7 @@ SSPanel-UIM 是一个基于 PHP 的代理服务管理面板，具有以下特点
 ### 软件环境
 - **操作系统**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+
 - **Web服务器**: Nginx
-- **PHP**: 8.2 或以上版本
+- **PHP**: 8.4 或以上版本
 - **数据库**: MySQL 8.0+ 或 MariaDB 10.11+
 - **缓存**: Redis 7.0+
 
