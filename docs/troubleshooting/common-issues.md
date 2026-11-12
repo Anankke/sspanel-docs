@@ -167,7 +167,7 @@ bash update.sh master
 - 切换代码之前，按目标版本的 `composer.json` 和 `composer.lock` 检查 PHP 版本与扩展，不满足就直接退出，站点不受影响
 - 用 `git reset --hard` 切换代码，对仓库里已有文件的本地修改会被丢弃
 - 切换代码后依次执行 `composer install`、`php xcat Update`、`php xcat Migration`、`php xcat Tool importSetting`。`php xcat Update` 按新的示例文件重新生成 `config/.config.php` 并保留原有取值，原文件备份为 `config/.config.php.bak`
-- 数据库迁移完成之前任何一步失败，脚本会把代码、依赖和 `config/.config.php` 回滚到升级前的版本。迁移本身无法回滚，迁移中途失败时，已经执行的数据库改动会留下，站点不正常就用升级前的数据库备份恢复
+- 数据库迁移完成之前任何一步失败，脚本会把代码、依赖和 `config/.config.php` 回滚到升级前的版本。迁移本身无法回滚，迁移中途失败时，已经执行的数据库改动会留下，站点不正常就用升级前的数据库备份恢复。26.3.0 起迁移失败后修好原因重新运行 `update.sh`，会从失败的那个迁移接着执行
 - 迁移完成之后的步骤失败时脚本不回滚，修好问题后执行 `php xcat Tool importSetting` 完成升级
 
 不用脚本时，按同样的顺序手动执行：
@@ -183,6 +183,16 @@ rm -rf storage/framework/twig/cache/*
 ```
 
 升级不会更新存放订阅模板的 `config/appprofile.php`。如果 `config/appprofile.example.php` 有变化，需要手动把改动合并到 `config/appprofile.php`。
+
+### 升级到 26.3.0
+
+升级前备份数据库，然后从 26.2.0 升级：
+
+```bash
+bash update.sh release 26.3.0 2025073100
+```
+
+用 Docker 部署的站点按 [Docker 部署](../installation/docker-install#升级) 升级。
 
 ### 升级到 26.2.0
 

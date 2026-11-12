@@ -3,6 +3,6 @@
   "position": 2,
   "link": {
     "type": "generated-index",
-    "description": "SSPanel-UIM 安装部署指南，包含一键安装和手动安装两种方式。"
+    "description": "SSPanel-UIM 安装部署指南，包含 Docker 部署和手动安装两种方式。"
   }
 }

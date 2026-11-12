@@ -23,6 +23,7 @@ const sidebars = {
       items: [
         'installation/quick-install',
         'installation/manual-install',
+        'installation/docker-install',
       ],
     },
     {
