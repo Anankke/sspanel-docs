@@ -34,10 +34,12 @@ use App\Models\Config;
 
 // 获取单个配置值，自动进行类型转换
 $app_id = Config::obtain('f2f_pay_app_id'); // 返回 string
-$enabled = Config::obtain('enable_register'); // 返回 bool
-$max_users = Config::obtain('max_online_user'); // 返回 int
-$settings = Config::obtain('mail_settings'); // 返回 object (stdClass)
+$enabled = Config::obtain('enable_checkin'); // 返回 bool
+$limit = Config::obtain('ticket_limit'); // 返回 int
+$gateways = Config::obtain('payment_gateway'); // 返回 array
 ```
+
+配置项不存在时，`obtain()` 返回空字符串 `''`。
 
 ### 获取分类下的所有配置
 
@@ -71,23 +73,15 @@ $publicConfigs = Config::getPublicConfig();
 
 ```php
 // 设置单个配置（字符串、整数、布尔值）
-Config::set('site_name', 'My SSPanel Site');
-Config::set('max_online_user', 1000);
-Config::set('enable_register', true);
+Config::set('reg_mode', 'close');
+Config::set('ticket_limit', 5);
+Config::set('enable_checkin', true);
 
 // 设置数组类型的配置（自动 JSON 编码）
-$mail_settings = [
-    'driver' => 'smtp',
-    'host' => 'smtp.gmail.com',
-    'port' => 587
-];
-Config::set('mail_settings', $mail_settings); // 自动处理编码
-
-// 注意：获取时返回的是 stdClass 对象，不是数组
-$settings = Config::obtain('mail_settings');
-echo $settings->driver; // 使用对象属性访问
-// 如需数组，可转换：$array = (array) $settings;
+Config::set('payment_gateway', ['stripe', 'paypal']);
 ```
+
+`set()` 只更新已存在的配置项，不会新建。配置项不存在时不报错，同样返回 `true`。
 
 ### 检查配置是否存在
 
@@ -109,12 +103,12 @@ Config 模型会根据 `type` 字段自动进行类型转换：
 | `string` | 原始字符串 | string | `"SSPanel"` |
 | `int` | 数字字符串 | int | `1000` |
 | `bool` | "0" 或 "1" | bool | `true` 或 `false` |
-| `array` | JSON 字符串 | object (stdClass) | `{"key": "value"}` |
+| `array` | JSON 字符串 | array | `["stripe", "paypal"]` |
 
 ### 重要提示
-- **数组自动处理**：使用 `set()` 方法时，数组会自动进行 JSON 编码；使用 `obtain()` 时会自动解码为 stdClass 对象（不是数组）
+- **数组自动处理**：使用 `set()` 方法时，数组会自动进行 JSON 编码；使用 `obtain()` 时用 `json_decode()` 解码，JSON 数组得到 PHP 数组。存成 JSON 对象的值会解码为 stdClass，而 `obtain()` 的返回类型不包含对象，读取时会抛出 `TypeError`，因此 `array` 类型只存 JSON 数组
 - **布尔值存储**：布尔值在数据库中存储为字符串 "0" 或 "1"
-- **类型安全**：始终根据 `type` 字段返回正确的类型
+- **类型转换**：配置项存在时按 `type` 字段转换；不存在时返回 `''`
 
 ## 配置分类
 
@@ -123,6 +117,7 @@ SSPanel 使用 `class` 字段对配置进行分类管理，常见的分类包括
 - `billing`: 计费相关配置
 - `captcha`: 验证码相关配置  
 - `cron`: 定时任务配置
+- `db`: 数据库相关配置
 - `email`: 邮件相关配置
 - `feature`: 功能开关配置
 - `im`: 即时通讯配置
@@ -141,18 +136,26 @@ SSPanel 使用 `class` 字段对配置进行分类管理，常见的分类包括
 
 ## 示例：添加新配置项
 
-```sql
--- 添加一个新的配置项
-INSERT INTO config (item, value, class, is_public, type, default, mark) 
-VALUES (
-    'custom_feature_enabled',
-    '1',
-    'feature',
-    0,
-    'bool',
-    '0',
-    '自定义功能开关'
-);
+数据库中的配置项以 `config/settings.json` 为准。`php xcat Tool importSetting` 会添加文件中新增的配置项、按文件更新已有配置项的 `class`，并删除文件中没有的配置项。直接用 SQL 插入的配置项会在下次运行该命令时被删除，每次升级都会运行这个命令。
+
+新增配置项时，在 `config/settings.json` 中加入一项：
+
+```json
+{
+    "item": "custom_feature_enabled",
+    "value": "0",
+    "class": "feature",
+    "is_public": 0,
+    "type": "bool",
+    "default": "0",
+    "mark": "自定义功能开关"
+}
+```
+
+然后运行：
+
+```bash
+php xcat Tool importSetting
 ```
 
 ## 常见问题
@@ -166,10 +169,7 @@ VALUES (
 
 ### 2. 配置不生效
 
-某些配置可能被缓存，更新后需要：
-- 清理应用缓存
-- 重启 PHP-FPM 或 Web 服务器
-- 检查是否有其他缓存层（Redis、OPcache 等）
+数据库配置每次读取都直接查询数据库，修改后立即生效。`config/.config.php` 中的配置会被 OPcache 缓存，按[系统优化](../optimization/system-optimization)设置了 `opcache.validate_timestamps=0` 时，修改后需要重启 PHP-FPM。
 
 ### 3. 类型错误
 
@@ -177,7 +177,7 @@ VALUES (
 
 ## 注意事项
 
-1. 修改数据库配置后，某些配置可能需要重启相关服务才能生效
+1. 数据库配置修改后立即生效；`config/.config.php` 修改后是否需要重启 PHP-FPM 见上文
 2. 对于重要配置的修改，建议先备份数据库
 3. 避免直接修改数据库，尽量通过管理面板或 API 进行配置管理
 4. 定期检查未使用的配置项，保持配置表的整洁

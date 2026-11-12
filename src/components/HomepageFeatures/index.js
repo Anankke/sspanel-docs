@@ -34,12 +34,12 @@ const FeatureList = [
     ),
   },
   {
-    title: '丰富的生态系统',
+    title: '多种订阅格式',
     icon: '🌳',
     description: (
       <>
-        成熟的插件体系，多样的主题选择。社区贡献的
-        各种扩展，让定制化变得简单。
+        订阅可输出 Clash、sing-box、V2Ray JSON、SIP008 等格式，
+        用户导入常用客户端即可使用。
       </>
     ),
   },

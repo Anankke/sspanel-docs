@@ -60,21 +60,25 @@ Telegram 是功能最完整的 IM 平台，支持双向交互。
 
 #### 基础设置
 
-- **启用 Telegram**：开启/关闭 Telegram 功能 (`enable_telegram`)
-- **Telegram Token**：机器人令牌 (`telegram_token`)
+- **Telegram Token**：机器人令牌 (`telegram_token`)，填写后机器人即开始处理消息
 - **Telegram 群组 ID**：默认群组 ID (`telegram_chatid`)
 - **Bot 用户名**：机器人的用户名，不含 @ (`telegram_bot`)
-- **Webhook 验证令牌**：用于 Webhook 安全验证 (`telegram_request_token`)
+- **Webhook 验证令牌**：用于 Webhook 安全验证 (`telegram_webhook_token`)，不能手填，点击「Reset Webhook Token」生成
+- **启用群组通知**：向群组发送下面的通知 (`enable_telegram_group_notify`)，默认关闭
 
 #### 通知设置
 
-- **节点新增通知**：新增节点时发送通知 (`telegram_add_node`)
-- **节点更新通知**：节点信息更新时发送通知 (`telegram_update_node`)
-- **节点删除通知**：删除节点时发送通知 (`telegram_delete_node`)
-- **节点离线通知**：节点离线时发送通知 (`telegram_node_offline`)
-- **节点上线通知**：节点恢复时发送通知 (`telegram_node_online`)
-- **节点被墙通知**：节点被 GFW 阻断时发送通知 (`telegram_node_gfwed`)
-- **每日任务通知**：定时发送每日报告 (`telegram_daily_job`)
+以下通知同时发往已启用群组通知的 Telegram 群组、Discord 频道和 Slack 频道：
+
+- **节点新增通知**：新增节点时发送通知 (`im_bot_group_notify_add_node`)
+- **节点更新通知**：节点信息更新时发送通知 (`im_bot_group_notify_update_node`)
+- **节点删除通知**：删除节点时发送通知 (`im_bot_group_notify_delete_node`)
+- **节点离线通知**：节点离线时发送通知 (`im_bot_group_notify_node_offline`)
+- **节点上线通知**：节点恢复时发送通知 (`im_bot_group_notify_node_online`)
+- **节点被墙通知**：节点被 GFW 阻断时发送通知 (`im_bot_group_notify_node_gfwed`)
+- **节点解封通知**：节点恢复可访问时发送通知 (`im_bot_group_notify_node_ungfwed`)
+- **每日任务通知**：定时发送每日报告 (`im_bot_group_notify_daily_job`)
+- **公告通知**：新建或更新公告时发送通知 (`im_bot_group_notify_ann_create`、`im_bot_group_notify_ann_update`)
 
 #### 群组管理
 
@@ -89,10 +93,10 @@ SSPanel-UIM 使用 Webhook 方式接收 Telegram 消息。
 
 **Webhook URL 格式：**
 ```
-https://your-domain.com/callback/telegram?token={telegram_request_token}
+https://your-domain.com/callback/telegram?token={telegram_webhook_token}
 ```
 
-其中 `{telegram_request_token}` 是在管理面板中设置的 Webhook 验证令牌。
+其中 `{telegram_webhook_token}` 是在管理面板中生成的 Webhook 验证令牌。
 
 #### 配置说明
 
@@ -104,7 +108,13 @@ Webhook 请求会通过站点的正常路由处理，无需特殊的 Nginx 配�
 
 #### 注册 Webhook
 
-配置完成后，系统会自动向 Telegram 注册 Webhook。也可以手动注册：
+系统不会自动注册 Webhook。依次完成以下步骤：
+
+1. 点击「Reset Webhook Token」生成验证令牌
+2. 填写并保存 Telegram Token
+3. 点击「Set Webhook」，面板用 `baseUrl` 拼出上面的地址并向 Telegram 注册
+
+也可以手动注册：
 
 ```bash
 curl -F "url=https://your-domain.com/callback/telegram?token=your_token" \
@@ -117,21 +127,21 @@ curl -F "url=https://your-domain.com/callback/telegram?token=your_token" \
 
 - `/start` - 开始使用机器人
 - `/help` - 获取帮助信息
-- `/ping` - 测试连接
-- `/menu` - 显示功能菜单
-- `/unbind` - 解除账号绑定
+- `/ping` - 获取自己或群组的 ID
+- `/menu` - 在私聊中显示功能菜单
+- `/unbind` - 解除账号绑定，在私聊中以 `/unbind 邮箱地址` 的形式发送
+- `/dc` - 在私聊中查看自己账号所在的 Telegram 数据中心
 - `/my` - 查看账号信息
 - `/checkin` - 每日签到
 
 #### 绑定流程
 
-1. 用户在 Telegram 中向机器人发送 `/menu` 或 `/start`
-2. 如果未绑定，会显示绑定提示
-3. 用户通过内联键盘按钮进行绑定操作
-4. 完成绑定后可以使用各项功能
+1. 用户登录网站，在账号资料页选择 Telegram 并点击 Telegram 登录按钮
+2. 在弹出的 Telegram 授权窗口中确认
+3. 完成绑定后可以在机器人中使用各项功能
 
 :::info 绑定说明
-绑定功能通过 Telegram 的内联键盘（Inline Keyboard）实现，而非传统的命令方式。
+绑定通过 Telegram Login Widget 在网站上完成，需要先在 @BotFather 中用 `/setdomain` 把站点域名设置给机器人。机器人内的内联键盘只在绑定后使用。
 :::
 
 ### 消息格式
@@ -188,9 +198,6 @@ _斜体文本_
 #### 日志查看
 
 ```bash
-# 查看 Telegram 相关日志
-tail -f storage/logs/sspanel.log | grep -i telegram
-
 # 查看 Webhook 请求日志
 tail -f /var/log/nginx/access.log | grep callback/telegram
 ```
@@ -240,9 +247,9 @@ Slack 主要用于团队通知。
 
 系统可以通过配置的 IM 平台发送以下通知：
 
-- 新用户注册通知
+- 节点新增、更新、删除通知
 - 节点状态变化通知
-- 系统维护通知
+- 公告通知
 - 每日统计报告
 
 ### 用户通知

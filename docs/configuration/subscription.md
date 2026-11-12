@@ -23,15 +23,15 @@ https://your-domain.com/sub/{token}/{subtype}
 SSPanel-UIM 支持多种订阅格式，满足不同客户端的需求。
 
 :::warning 格式启用配置
-部分订阅格式需要在配置中启用：
-- Shadowsocks 格式需要启用 `$_ENV['enable_ss_sub']`
-- V2Ray 格式需要启用 `$_ENV['enable_v2_sub']`
-- Trojan 格式需要启用 `$_ENV['enable_trojan_sub']`
+部分订阅格式需要在管理后台的「订阅设置」中启用。这些是数据库设置，不在 `.config.php` 中：
+- Shadowsocks 格式需要启用 `enable_ss_sub`，包括 ss、sip002、sip008
+- V2Ray 格式需要启用 `enable_v2_sub`
+- Trojan 格式需要启用 `enable_trojan_sub`
 :::
 
 ### 1. JSON 格式
 
-通用 JSON 格式，包含用户信息和节点列表。
+JSON 格式的账户信息：用户名、邮箱、等级与到期时间、流量用量，以及 sing-box 和 Clash 订阅地址。不包含节点列表。
 
 **请求路径：** `/sub/{token}/json`
 
@@ -55,7 +55,11 @@ SSPanel-UIM 支持多种订阅格式，满足不同客户端的需求。
 
 **特性：**
 - JSON 格式输出
-- 支持最新协议
+- 包含 Shadowsocks、Shadowsocks 2022、TUIC、VMess、VLESS、Trojan、Hysteria2 节点，`network` 为 `xhttp` 的 VLESS 节点除外
+
+:::info sing-box 版本
+面板自带的 sing-box 配置模板，即 `config/appprofile.example.php` 中的 `SingBox_Config`，需要 sing-box 1.14.0 及以上版本。站点实际使用的是自己的 `config/appprofile.php`，升级面板不会更新这个文件，需要手动把示例文件中的新模板合并进去。
+:::
 
 ### 4. V2Ray 格式
 
@@ -64,8 +68,8 @@ SSPanel-UIM 支持多种订阅格式，满足不同客户端的需求。
 **请求路径：** `/sub/{token}/v2ray`
 
 **特性：**
-- Base64 编码的 vmess:// 链接
-- 需要启用 `$_ENV['enable_v2_sub']`
+- 每行一个链接：VMess 节点为 Base64 编码的 vmess:// 链接，开启 VLESS 的节点为 vless:// 链接，Hysteria2 节点为 hysteria2:// 链接
+- 需要在订阅设置中启用 `enable_v2_sub`
 
 ### 5. V2RayJson 格式
 
@@ -75,7 +79,7 @@ V2Ray 的 JSON 配置格式。
 
 **特性：**
 - JSON 格式输出
-- 完整的 V2Ray 配置
+- 完整的 V2Ray 配置，只包含 Shadowsocks、Shadowsocks 2022、VMess、Trojan 节点
 
 ### 6. Shadowsocks 格式
 
@@ -85,7 +89,7 @@ V2Ray 的 JSON 配置格式。
 
 **特性：**
 - Base64 编码的节点信息
-- 需要启用 `$_ENV['enable_ss_sub']`
+- 需要在订阅设置中启用 `enable_ss_sub`
 
 ### 7. SIP002 格式
 
@@ -95,7 +99,7 @@ Shadowsocks SIP002 标准格式。
 
 **特性：**
 - 符合 SIP002 标准的 ss:// 链接
-- 需要启用 `$_ENV['enable_ss_sub']`
+- 需要在订阅设置中启用 `enable_ss_sub`
 
 ### 8. SIP008 格式
 
@@ -114,8 +118,17 @@ Trojan 协议订阅格式。
 **请求路径：** `/sub/{token}/trojan`
 
 **特性：**
-- Base64 编码的 trojan:// 链接
-- 需要启用 `$_ENV['enable_trojan_sub']`
+- 每行一个 trojan:// 链接，不做 Base64 编码
+- 需要在订阅设置中启用 `enable_trojan_sub`
+
+### 10. Hysteria2 格式
+
+Hysteria2 节点的 URI 列表。
+
+**请求路径：** `/sub/{token}/hysteria2`
+
+**特性：**
+- 每行一个 hysteria2:// 链接，只包含 Hysteria2 节点
 
 ## 订阅设置
 
@@ -155,10 +168,12 @@ $_ENV['subUrl'] = $_ENV['baseUrl']; // 订阅地址
 
 订阅内容会根据以下条件自动筛选：
 
-- 用户等级限制
+- 节点设为显示
+- 用户等级不低于节点等级
 - 节点分组权限
-- 节点在线状态
-- 流量限制状态
+- 节点流量未超过节点流量上限
+
+节点离线不会被筛掉，仍会出现在订阅中。
 
 ## 订阅响应信息
 
@@ -183,11 +198,11 @@ $_ENV['subUrl'] = $_ENV['baseUrl']; // 订阅地址
 
 订阅链接的访问受到速率限制保护：
 
-- 基于 IP 地址的限制（sub_ip）
-- 基于订阅令牌的限制（sub_token）
+- 基于 IP 地址的限制：`$_ENV['rate_limit_sub_ip']`，默认每个 IP 每分钟 10 次
+- 基于订阅令牌的限制：`$_ENV['rate_limit_sub']`，默认每个令牌每分钟 10 次
 
 :::info 速率限制
-速率限制需要先启用 `$_ENV['enable_rate_limit']` 配置。具体的限制规则在速率限制配置中定义。
+速率限制需要先启用 `$_ENV['enable_rate_limit']` 配置，示例配置中默认已启用。
 :::
 
 ## 客户端配置指南

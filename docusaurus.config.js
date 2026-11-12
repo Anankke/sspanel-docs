@@ -130,7 +130,7 @@ const config = {
               },
               {
                 label: '安装指南',
-                to: '/docs/installation/quick-install',
+                to: '/docs/installation/manual-install',
               },
               {
                 label: '配置文档',

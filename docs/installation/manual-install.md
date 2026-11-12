@@ -27,7 +27,7 @@ import TabItem from '@theme/TabItem';
 - **架构**：x86_64
 - **软件版本**：
   - PHP 8.2+（本文档使用 8.4，推荐用于更好的性能）
-    - 必需扩展：bcmath、curl、fileinfo、gmp、json、mbstring、mysqli、openssl、pdo、posix、redis、sodium、xml、yaml、zip
+    - 必需扩展：bcmath、curl、fileinfo、gmp、json、mbstring、openssl、pdo、pdo_mysql、posix、redis、sodium、xml、yaml、zip
     - 性能优化扩展：opcache（强烈推荐，提升 PHP 性能）
   - MariaDB 10.11+（本文档使用 11.8 LTS，推荐的长期支持版本）
   - Redis 7.0+
@@ -594,22 +594,13 @@ cd sspanel
 # 因为后续会将目录权限改为 www-data，需要预先配置避免 Git 报错
 git config --global --add safe.directory /var/www/sspanel
 
-# 处理 PHP 扩展依赖（根据 PHP 版本选择）
-# 如果使用 PHP 8.4，建议删除 composer.lock 以获得更好的兼容性
-if php -v | grep -q "PHP 8.4"; then
-    echo "检测到 PHP 8.4，将删除 composer.lock 以优化依赖兼容性"
-    rm -f composer.lock
-fi
-
 # 安装依赖
 echo "开始安装 Composer 依赖..."
 composer install --no-dev --optimize-autoloader
 
-# 注意：如果出现 gmp 扩展缺失错误，有两种解决方案：
-# 方案1：安装 php-gmp 扩展（标准方案）
+# 注意：如果出现 gmp 扩展缺失错误，请安装 php-gmp 扩展：
 #   Debian/Ubuntu: apt install php8.4-gmp
 #   CentOS/RHEL: dnf install php-gmp
-# 方案2：对于 PHP 8.4，上面已经删除了 composer.lock 会自动跳过不必要的扩展
 
 # 验证安装是否成功
 if [ ! -f vendor/autoload.php ]; then
@@ -729,7 +720,7 @@ chmod 664 /var/www/sspanel/config/appprofile.php
 - **755/644**：标准的目录/文件权限，所有者可读写执行，其他用户只读
 - **775/664**：组用户也可写，适用于需要 Web 服务器写入的目录/文件
 - **777**：storage 目录需要此权限，因为 PHP 进程和定时任务可能以不同用户运行
-- **storage/**：存储缓存、编译模板、日志等运行时文件
+- **storage/**：存储缓存、编译模板、GeoIP 数据库等运行时文件
 - **public/clients/**：存储客户端下载文件
 - **config/**：仅在初次安装时需要写权限，之后可改为只读
 :::
@@ -740,7 +731,9 @@ chmod 664 /var/www/sspanel/config/appprofile.php
 编辑配置文件 `/var/www/sspanel/config/.config.php`：
 
 ```php
-$_ENV['baseUrl'] = 'https://your-domain.com';     // 修改为你的域名
+$_ENV['key'] = '随机字符串';                       // Cookie 加密密钥，务必修改
+$_ENV['baseUrl'] = 'https://your-domain.com';     // 修改为你的域名，必须以 https:// 开头，结尾不带 /
+$_ENV['muKey'] = '另一个随机字符串';                 // 节点后端通信密钥，务必修改
 
 // 数据库配置
 $_ENV['db_host'] = '127.0.0.1';
@@ -1009,9 +1002,9 @@ tail -f /var/log/sspanel-cron.log
 将定时任务输出重定向到日志文件，便于监控和排查问题。
 :::
 
-## 步骤 11：配置 SSL（强烈推荐）
+## 步骤 11：配置 SSL
 
-为了保护用户数据安全，强烈建议配置 HTTPS：
+这一步不能省略。`baseUrl` 必须以 `https://` 开头，订阅链接、支付回调地址和 Telegram Webhook 地址都由它生成，没有 HTTPS 时这些地址都无法访问。
 
 <Tabs groupId="os">
 <TabItem value="debian" label="Debian 12" default>

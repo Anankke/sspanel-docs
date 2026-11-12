@@ -14,9 +14,9 @@ tags: [installation, deployment, proxy, panel]
 
 SSPanel-UIM 是一个基于 PHP 的代理服务管理面板，具有以下特点：
 
-- **多协议支持**：支持 Shadowsocks、V2Ray、Trojan、Hysteria 等主流协议
+- **多协议支持**：支持 Shadowsocks、Shadowsocks 2022、VMess、VLESS、Trojan、TUIC、Hysteria2 协议
 - **用户管理**：完善的用户注册、订阅、流量统计系统
-- **节点管理**：支持多节点管理、负载均衡、智能路由
+- **节点管理**：按用户等级和分组分配节点，统计节点流量与在线状态
 - **财务系统**：支持多种支付方式、套餐管理、佣金系统
 - **运营工具**：工单系统、邮件通知、数据统计等
 
@@ -40,20 +40,9 @@ SSPanel-UIM 是一个基于 PHP 的代理服务管理面板，具有以下特点
 - **操作系统**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+
 - **Web服务器**: Nginx
 - **PHP**: 8.2 或以上版本
-- **数据库**: MySQL 8.0+ 或 MariaDB 10.6+
+- **数据库**: MySQL 8.0+ 或 MariaDB 10.11+
 - **缓存**: Redis 7.0+
-
-## 快速开始
-
-:::info 提示
-目前 SSPanel-UIM 需要通过手动安装方式部署。我们正在开发更便捷的安装方案。
-:::
 
 ## 安装方式
 
-我们提供两种安装方式：
-
-1. **[一键安装](./installation/quick-install)**：适合新手用户，自动化程度高
-2. **[手动安装](./installation/manual-install)**：适合有经验的用户，可定制性强（支持 Ubuntu、Debian、CentOS、Arch Linux 等）
-
-选择适合您的安装方式开始部署 SSPanel-UIM。
+目前 SSPanel-UIM 只能手动安装，步骤见[手动安装指南](./installation/manual-install)，覆盖 Ubuntu、Debian、CentOS、Arch Linux 等系统。

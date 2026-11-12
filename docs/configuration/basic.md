@@ -8,7 +8,7 @@ tags: [configuration, basic, database, redis]
 
 # 基础配置
 
-本章节将详细介绍 SSPanel-UIM 的基础配置项。所有配置项都位于 `config/.config.php` 文件中。
+本章节将详细介绍 SSPanel-UIM 的基础配置项。基础配置项位于 `config/.config.php` 文件中；Clash、sing-box、V2Ray JSON 的订阅模板位于 `config/appprofile.php`；其余运营设置保存在数据库中，在管理后台修改。
 
 ## 配置文件位置
 
@@ -17,9 +17,10 @@ SSPanel-UIM 的主配置文件位于：
 /path/to/sspanel/config/.config.php
 ```
 
-首次安装时，需要从示例文件复制：
+首次安装时，需要从示例文件复制这两个文件，缺少任意一个站点都无法打开：
 ```bash
 cp config/.config.example.php config/.config.php
+cp config/appprofile.example.php config/appprofile.php
 ```
 
 ## 核心配置
@@ -130,7 +131,7 @@ $_ENV['redis_ssl_context'] = [];
 
 ## GeoIP2 配置
 
-GeoIP2 用于识别用户的地理位置信息，需要 MaxMind 账户。
+GeoIP2 用于识别用户的地理位置信息，需要 MaxMind 账户 ID 和 License Key。
 
 ### 获取 MaxMind License Key
 
@@ -143,6 +144,8 @@ GeoIP2 用于识别用户的地理位置信息，需要 MaxMind 账户。
 ### 配置 GeoIP2
 
 ```php
+// MaxMind 账户 ID，登录后在账户页面查看
+$_ENV['maxmind_account_id'] = 'your_account_id_here';
 // MaxMind License Key
 $_ENV['maxmind_license_key'] = 'your_license_key_here';
 
@@ -152,16 +155,16 @@ $_ENV['geoip_locale'] = 'zh-CN'; // 可选：zh-CN, en, ja 等
 
 :::info 说明
 - 免费的 GeoLite2 数据库每周更新一次
-- 首次配置后，系统会自动下载 GeoIP 数据库
-- 数据库文件存储在 `storage/GeoLite2-City.mmdb`
+- 代码仓库自带一份数据库，存储在 `storage/GeoLite2-City/GeoLite2-City.mmdb` 和 `storage/GeoLite2-Country/GeoLite2-Country.mmdb`
+- `maxmind_license_key` 为空时，面板不查询 IP 位置，统一显示 `GeoIP2 service not configured`
 :::
 
 :::tip 更新数据库
 使用以下命令手动更新 GeoIP 数据库：
 ```bash
-php xcat Update downloadGeoIP
+php xcat Tool updateGeoIP2
 ```
-建议通过定时任务每周更新一次。
+面板的 Cron 任务不会更新 GeoIP 数据库，建议另加一条每周运行的定时任务执行上面的命令。
 :::
 
 ## 安全配置

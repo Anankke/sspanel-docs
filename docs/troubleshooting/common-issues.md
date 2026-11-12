@@ -151,21 +151,38 @@ Failed to open stream: Permission denied
 
 **解决方案：**
 
+升级前先备份数据库，再读目标版本在 [GitHub Releases](https://github.com/Anankke/SSPanel-UIM/releases) 上的发布说明，其中写有该版本的升级前提、要用的数据库版本号和升级命令。升级用站点目录下的 `update.sh`，不要只执行 `git pull`：
+
 ```bash
-# 1. 更新依赖
+cd /var/www/sspanel
+# 升级到某个发行版，第三个参数是发布说明中给出的数据库版本号
+bash update.sh release 版本号 数据库版本号
+# 或升级到最新的 master
+bash update.sh master
+```
+
+`update.sh` 的行为：
+
+- 站点目录里有 `composer.phar` 时用它，否则用 PATH 中的 `composer`
+- 切换代码之前，按目标版本的 `composer.json` 和 `composer.lock` 检查 PHP 版本与扩展，不满足就直接退出，站点不受影响
+- 用 `git reset --hard` 切换代码，对仓库里已有文件的本地修改会被丢弃
+- 切换代码后依次执行 `composer install`、`php xcat Update`、`php xcat Migration`、`php xcat Tool importSetting`。`php xcat Update` 按新的示例文件重新生成 `config/.config.php` 并保留原有取值，原文件备份为 `config/.config.php.bak`
+- 数据库迁移完成之前任何一步失败，脚本会把代码、依赖和 `config/.config.php` 回滚到升级前的版本。迁移本身无法回滚，迁移中途失败时，已经执行的数据库改动会留下，站点不正常就用升级前的数据库备份恢复
+- 迁移完成之后的步骤失败时脚本不回滚，修好问题后执行 `php xcat Tool importSetting` 完成升级
+
+不用脚本时，按同样的顺序手动执行：
+
+```bash
 composer install --no-dev --optimize-autoloader
-
-# 2. 执行数据库迁移
+php xcat Update
 php xcat Migration latest
-
-# 3. 清理缓存
+php xcat Tool importSetting
 rm -rf storage/framework/smarty/cache/*
 rm -rf storage/framework/smarty/compile/*
 rm -rf storage/framework/twig/cache/*
-
-# 4. 检查新版本的更新日志
-# 查看是否有配置文件变更或其他注意事项
 ```
+
+升级不会更新存放订阅模板的 `config/appprofile.php`。如果 `config/appprofile.example.php` 有变化，需要手动把改动合并到 `config/appprofile.php`。
 
 ## 配置问题
 
@@ -301,17 +318,17 @@ CONFIG SET maxmemory-policy allkeys-lru
 ```sql
 -- 分析表
 ANALYZE TABLE user;
-ANALYZE TABLE user_traffic_log;
+ANALYZE TABLE hourly_usage;
 
 -- 优化表
 OPTIMIZE TABLE user;
-OPTIMIZE TABLE node_online_log;
+OPTIMIZE TABLE online_log;
 ```
 
 ## GeoIP2 配置
 
 **问题描述：**
-系统提示 "GeoIP2 服务未配置" 或无法显示用户地理位置信息。
+IP 位置显示为 `GeoIP2 service not configured`，或无法显示用户地理位置信息。`maxmind_license_key` 为空时会显示前者。
 
 **解决方案：**
 
@@ -348,15 +365,14 @@ OPTIMIZE TABLE node_online_log;
 
 修改 `config/.config.php` 中的相关配置：
 
-```php
-// 1. 增加默认登录时长（推荐）
-$time = 86400; // 24 小时，原值为 3600（1小时）
+未勾选"记住我"时的 1 小时登录时长写在 `src/Controllers/AuthController.php` 中，没有对应的配置项。
 
-// 2. 调整安全绑定设置
+```php
+// 1. 调整安全绑定设置
 $_ENV['enable_login_bind_ip'] = false;     // 禁用 IP 绑定
 $_ENV['enable_login_bind_device'] = false; // 禁用设备绑定
 
-// 3. 延长"记住我"时长
+// 2. 延长"记住我"时长
 $_ENV['rememberMeDuration'] = 30; // 30 天，原值为 7 天
 ```
 

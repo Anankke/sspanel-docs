@@ -93,8 +93,8 @@ function TrustSection() {
           </div>
           <div className={styles.trustItem}>
             <div className={styles.trustIcon}>🌍</div>
-            <div className={styles.trustTitle}>生态成熟</div>
-            <div className={styles.trustDesc}>完善的插件和主题系统</div>
+            <div className={styles.trustTitle}>开源免费</div>
+            <div className={styles.trustDesc}>MIT 许可证，源码公开</div>
           </div>
           <div className={styles.trustItem}>
             <div className={styles.trustIcon}>👥</div>
@@ -117,8 +117,8 @@ function QuickStart() {
             <p>跟随我们的文档，快速部署属于你的 SSPanel 服务</p>
           </div>
           <div className={styles.quickStartButtons}>
-            <Link to="/docs/installation/quick-install" className="button button--primary button--lg">
-              快速安装指南
+            <Link to="/docs/installation/manual-install" className="button button--primary button--lg">
+              安装指南
             </Link>
             <Link to="/docs/intro" className="button button--outline button--lg">
               查看文档
